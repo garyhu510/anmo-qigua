@@ -21,4 +21,4 @@
 安裝後先在有網路時開一次，之後即可離線使用。
 
 ## 更新程式
-修改 index.html 後，把 sw.js 第二行的 anmo-v1 改成 anmo-v2，一起上傳覆蓋。
+修改 index.html 後，把 sw.js 第二行的版本號加一（例如 anmo-v2 改成 anmo-v3），一起上傳覆蓋。
