@@ -23,15 +23,8 @@
 ## 更新程式
 修改 index.html 後，把 sw.js 第二行的版本號加一（例如 anmo-v2 改成 anmo-v3），一起上傳覆蓋。
 
-## AI 解卦設定
-1. 打開 App 下方的「AI 解卦設定」，選 Claude、Gemini 或 ChatGPT。
-2. 貼上該家的 API 金鑰，按「儲存設定」。
-   - Claude：console.anthropic.com → API Keys（需儲值）
-   - Gemini：aistudio.google.com/apikey（有免費額度）
-   - ChatGPT：platform.openai.com/api-keys（需儲值）
-3. 起卦後按「請安墨居士解卦」。
-金鑰只存在自己的手機，每個人用自己的金鑰與帳單。
-
-## 沒有金鑰也能解卦
-起卦後按「複製並前往 Claude 解卦」，會複製起卦結果並打開 Claude。進入「安墨易卦」專案貼上送出即可，用的是 Claude 會員額度。
-可在「AI 解卦設定」填入專案網址，按鈕就會直接打開專案。
+## 請安墨居士解卦
+在「安墨解卦」區塊點選 Claude、Gemini 或 ChatGPT，再按「複製並前往 ○○ 解卦」。
+App 會連同安墨居士指令一起複製，並打開該 AI，在新對話貼上送出即可，用的是自己原本的帳號或訂閱。
+若在該 AI 建好了安墨的專案（Claude）、Gem（Gemini）或 GPT（ChatGPT），可在「解卦設定」填入網址，之後只複製起卦結果並直接打開它。
+「複製安墨居士指令」按鈕可複製角色指令，貼到 Gem、GPT 或專案的指示欄位。

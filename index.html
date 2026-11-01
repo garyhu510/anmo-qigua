@@ -129,19 +129,10 @@ details summary{cursor:pointer;color:var(--ink-2);font-size:13px;text-align:cent
 .ai-head h3{font-size:20px}
 .ai-who{font-size:12px;color:var(--ink-2)}
 .ai-btn{border:0;background:var(--seal);color:#fff;font:inherit;font-size:16px;font-family:var(--f-display);font-weight:700;letter-spacing:.08em;padding:12px 18px;border-radius:10px;cursor:pointer}
-.ai-btn[disabled]{opacity:.55;cursor:default}
-.linkbtn{background:none;border:0;padding:0;font:inherit;font-size:13px;color:var(--jade);text-decoration:underline;cursor:pointer;align-self:center}
+.mini{display:flex;gap:6px;flex-wrap:wrap}
+.mini button{border:1px solid var(--line);background:none;color:var(--ink-2);font:inherit;font-size:13px;padding:4px 12px;border-radius:999px;cursor:pointer}
+.mini button[aria-checked="true"]{border-color:var(--jade);background:var(--jade-soft);color:var(--jade)}
 .ai-msg{font-size:14px;color:var(--ink-2);margin:0}
-.ai-msg.err{color:var(--seal)}
-.ai-out{font-size:15px;line-height:1.85;display:flex;flex-direction:column;gap:10px;min-width:0;overflow-wrap:anywhere}
-.ai-out h4{font-family:var(--f-display);font-size:17px;margin:6px 0 0;color:var(--jade)}
-.ai-out p,.ai-out ul,.ai-out ol{margin:0}
-.ai-out ul,.ai-out ol{padding-left:1.3em}
-.ai-out blockquote{margin:0;padding:6px 14px;border-left:3px solid var(--seal);font-family:var(--f-display);font-size:16px}
-.ai-out hr{border:0;border-top:1px solid var(--line);width:100%}
-.ai-meta{font-size:12px;color:var(--ink-2)}
-.dots::after{content:"";animation:dots 1.4s steps(4) infinite}
-@keyframes dots{0%{content:""}25%{content:"．"}50%{content:"．．"}75%{content:"．．．"}}
 .settings{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
 .settings summary{cursor:pointer;font-family:var(--f-display);font-size:18px;font-weight:700}
 .set-body{display:flex;flex-direction:column;gap:14px;margin-top:14px}
@@ -211,10 +202,10 @@ footer{font-size:12px;color:var(--ink-2);text-align:center}
   <section class="result" id="result" aria-live="polite"></section>
 
   <details class="settings" id="settings">
-    <summary>AI 解卦設定</summary>
+    <summary>解卦設定</summary>
     <div class="set-body">
       <div class="field">
-        <span class="label">選擇解卦的 AI</span>
+        <span class="label">預設前往的 AI</span>
         <div class="prov" role="radiogroup">
           <label><input type="radio" name="prov" value="claude" id="p-claude">Claude<small>Anthropic</small></label>
           <label><input type="radio" name="prov" value="gemini" id="p-gemini">Gemini<small>Google</small></label>
@@ -222,26 +213,17 @@ footer{font-size:12px;color:var(--ink-2);text-align:center}
         </div>
       </div>
       <div class="field">
-        <label class="label" for="api-key">API 金鑰</label>
-        <input id="api-key" type="password" autocomplete="off" spellcheck="false" placeholder="貼上你的金鑰">
+        <label class="label" for="proj-url" id="proj-label">安墨專案網址（選填）</label>
+        <input id="proj-url" type="url" inputmode="url" autocomplete="off" spellcheck="false">
+        <p class="note" id="proj-help"></p>
+        <div class="row"><button class="btn solid" id="save-url">儲存網址</button><span class="toast" id="set-toast"></span></div>
       </div>
       <div class="field">
-        <label class="label" for="api-model">模型</label>
-        <input id="api-model" list="models" autocomplete="off" spellcheck="false">
-        <datalist id="models"></datalist>
+        <span class="label">自建安墨專案</span>
+        <p class="note">想在 Gemini 的 Gem、ChatGPT 的 GPT 或 Claude 的專案裡長期使用，可複製安墨居士的指令貼到它的「指示」欄位。</p>
+        <div class="row"><button class="btn" id="copy-sys">複製安墨居士指令</button><span class="toast" id="sys-toast"></span></div>
       </div>
-      <div class="row">
-        <button class="btn solid" id="save-key">儲存設定</button>
-        <button class="btn" id="del-key">刪除這組金鑰</button>
-        <span class="toast" id="set-toast"></span>
-      </div>
-      <p class="note" id="key-help"></p>
-      <div class="field">
-        <label class="label" for="proj-url">「安墨易卦」專案網址（選填）</label>
-        <input id="proj-url" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://claude.ai/project/...">
-        <p class="note">沒有金鑰時，按「複製並前往 Claude 解卦」會打開這個網址。在 Claude 網頁版進入專案，複製網址列貼在這裡；不填就打開 Claude 新對話。</p>
-      </div>
-      <p class="note">金鑰只存在這支手機，起卦結果只會送到你選的那家 AI，不經過其他伺服器。解卦按用量計費，帳單由各家 AI 直接向你收取。</p>
+      <p class="note">起卦結果只會複製到你的手機剪貼簿，由你自己貼到 AI，App 不會傳送任何資料。</p>
     </div>
   </details>
 
@@ -381,10 +363,11 @@ function render(r,{example=false,animate=true}={}){
   ${jieHTML(r)}
   ${example?'':`<div class="ai" id="ai">
     <div class="ai-head"><h3>安墨解卦</h3><span class="ai-who" id="ai-who"></span></div>
-    <div class="ai-out" id="ai-out"></div>
+    <div class="mini" role="radiogroup" aria-label="選擇解卦的 AI">
+      <button data-p="claude">Claude</button><button data-p="gemini">Gemini</button><button data-p="openai">ChatGPT</button>
+    </div>
     <p class="ai-msg" id="ai-msg"></p>
     <button class="ai-btn" id="ai-go">請安墨居士解卦</button>
-    <button class="linkbtn" id="ai-set" hidden>或設定 AI 金鑰，直接在 App 內解卦</button>
   </div>`}
   <div class="copy-area">
     <label class="label" for="out">貼回專案解卦</label>
@@ -402,39 +385,41 @@ function render(r,{example=false,animate=true}={}){
 }
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 
-/* ===== AI 解卦 ===== */
+/* ===== 安墨解卦：複製並前往 AI ===== */
 let cur=null;
 const PROV={
-  claude:{name:'Claude',def:'claude-sonnet-5-5',models:['claude-sonnet-5-5','claude-haiku-5-5','claude-opus-5-5'],
-    help:'到 <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> 建立金鑰（sk-ant- 開頭），需先儲值。Claude 訂閱方案不含 API 用量。'},
-  gemini:{name:'Gemini',def:'gemini-3.8-flash',models:['gemini-3.8-flash','gemini-3.5-flash-lite','gemini-4-argon'],
-    help:'到 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> 用 Google 帳號建立金鑰，有免費額度。'},
-  openai:{name:'ChatGPT',def:'gpt-6.1-terra',models:['gpt-6.1-terra','gpt-6-luna','gpt-6.1-sol','gpt-6-astra'],
-    help:'到 <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a> 建立金鑰（sk- 開頭），需先儲值。ChatGPT Plus 訂閱不含 API 用量。'}
+  claude:{name:'Claude',chat:'https://claude.ai/new',re:/^https:\/\/claude\.ai\//,host:'https://claude.ai/',where:'專案',ph:'https://claude.ai/project/...'},
+  gemini:{name:'Gemini',chat:'https://gemini.google.com/app',re:/^https:\/\/gemini\.google\.com\//,host:'https://gemini.google.com/',where:' Gem ',ph:'https://gemini.google.com/gem/...'},
+  openai:{name:'ChatGPT',chat:'https://chatgpt.com/',re:/^https:\/\/(chatgpt\.com|chat\.openai\.com)\//,host:'https://chatgpt.com/',where:' GPT 或專案',ph:'https://chatgpt.com/g/...'}
 };
 const SKEY='anmo-ai-settings';
 function loadSet(){try{return JSON.parse(localStorage.getItem(SKEY))||{}}catch(e){return {}}}
 function saveSet(o){try{localStorage.setItem(SKEY,JSON.stringify(o));return true}catch(e){return false}}
-let SET=Object.assign({prov:'claude',keys:{},models:{}},loadSet());
+const oldSet=loadSet();
+let SET={prov:PROV[oldSet.prov]?oldSet.prov:'claude',urls:oldSet.urls||{}};
+if(oldSet.proj&&!SET.urls.claude) SET.urls.claude=oldSet.proj;
+saveSet(SET); /* 舊版若存過金鑰，在此一併清除 */
 
 function fillSettings(){
   const p=SET.prov; $('p-'+p).checked=true;
-  $('api-key').value=SET.keys[p]||'';
-  $('api-model').value=SET.models[p]||PROV[p].def;
-  $('models').innerHTML=PROV[p].models.map(m=>`<option value="${m}">`).join('');
-  $('key-help').innerHTML=PROV[p].help;
-  $('proj-url').value=SET.proj||'';
+  $('proj-url').value=SET.urls[p]||''; $('proj-url').placeholder=PROV[p].ph;
+  $('proj-label').textContent=`${PROV[p].name} 的安墨${PROV[p].where}網址（選填）`;
+  $('proj-help').textContent=`若你在 ${PROV[p].name} 建好了安墨${PROV[p].where}，貼上它的網址，按鈕會直接打開它，並只複製起卦結果；不填就打開 ${PROV[p].name} 新對話，並連同安墨居士指令一起複製。`;
 }
-document.querySelectorAll('input[name=prov]').forEach(i=>i.onchange=()=>{SET.prov=i.value;fillSettings();$('set-toast').textContent='';});
-$('save-key').onclick=()=>{
-  const p=SET.prov; SET.keys[p]=$('api-key').value.trim(); SET.models[p]=$('api-model').value.trim()||PROV[p].def;
-  const u=$('proj-url').value.trim(); SET.proj=/^https:\/\/claude\.ai\//.test(u)?u:'';
-  if(u&&!SET.proj){$('set-toast').textContent='專案網址需以 https://claude.ai/ 開頭';return}
-  $('set-toast').textContent=saveSet(SET)?`已儲存，之後用 ${PROV[p].name} 解卦`:'這個瀏覽器無法儲存，請確認不是無痕模式';
+function setProv(p){SET.prov=p;saveSet(SET);fillSettings();$('set-toast').textContent='';if(cur)aiPrepare(cur);}
+document.querySelectorAll('input[name=prov]').forEach(i=>i.onchange=()=>setProv(i.value));
+$('save-url').onclick=()=>{
+  const p=SET.prov, u=$('proj-url').value.trim();
+  if(u&&!PROV[p].re.test(u)){$('set-toast').textContent=`網址需以 ${PROV[p].host} 開頭`;return}
+  SET.urls[p]=u;
+  $('set-toast').textContent=saveSet(SET)?(u?'已儲存':'已清除，改開新對話'):'這個瀏覽器無法儲存，請確認不是無痕模式';
   if(cur) aiPrepare(cur);
 };
-$('del-key').onclick=()=>{const p=SET.prov;delete SET.keys[p];saveSet(SET);fillSettings();$('set-toast').textContent='已刪除';if(cur)aiPrepare(cur);};
 fillSettings();
+$('copy-sys').onclick=()=>{
+  const t=SYS.replace('使用者已用 App 起好卦，卦象、算式、體用與經文都已提供，請直接採用，不要重新計算。','使用者會貼上「安墨起卦」App 的起卦結果，卦象、算式、體用與經文都已提供，請直接採用，不要重新計算。');
+  try{navigator.clipboard.writeText(t).then(()=>$('sys-toast').textContent='已複製指令',()=>$('sys-toast').textContent='無法複製，請改用電腦操作')}catch(e){$('sys-toast').textContent='無法複製'}
+};
 
 const SYS=`你是「安墨居士」，精通《周易》與梅花易數的卜卦師，語氣溫暖沉穩，像一位懂市場也懂人心的長者。使用者已用 App 起好卦，卦象、算式、體用與經文都已提供，請直接採用，不要重新計算。
 
@@ -454,101 +439,30 @@ const SYS=`你是「安墨居士」，精通《周易》與梅花易數的卜卦
 
 function aiPrompt(r){return copyText(r).replace(/\n\n請依.*$/s,'')+`\n本卦白話：${YJ[shortName(r.ben)].g}\n動爻白話：${YJ[shortName(r.ben)].b[r.mv-1]}\n之卦白話：${YJ[shortName(r.zhi)].g}\n\n請安墨居士為我解卦。`}
 
-async function callAI(p,key,model,user){
-  let res,data;
-  if(p==='claude'){
-    res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model,max_tokens:2500,system:SYS,messages:[{role:'user',content:user}]})});
-    data=await res.json().catch(()=>({}));
-    if(!res.ok) throw new Error(data.error?.message||res.status);
-    return (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
-  }
-  if(p==='gemini'){
-    res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:'POST',headers:{'content-type':'application/json','x-goog-api-key':key},
-      body:JSON.stringify({systemInstruction:{parts:[{text:SYS}]},contents:[{role:'user',parts:[{text:user}]}]})});
-    data=await res.json().catch(()=>({}));
-    if(!res.ok) throw new Error(data.error?.message||res.status);
-    const t=(data.candidates?.[0]?.content?.parts||[]).filter(x=>!x.thought).map(x=>x.text||'').join('');
-    if(!t) throw new Error(data.promptFeedback?.blockReason?'內容被安全機制擋下':'沒有收到回覆');
-    return t;
-  }
-  res=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json','authorization':'Bearer '+key},
-    body:JSON.stringify({model,max_completion_tokens:6000,messages:[{role:'system',content:SYS},{role:'user',content:user}]})});
-  data=await res.json().catch(()=>({}));
-  if(!res.ok) throw new Error(data.error?.message||res.status);
-  return data.choices?.[0]?.message?.content||'';
-}
-
-function friendly(e){
-  const m=String(e.message||e);
-  if(/Failed to fetch|NetworkError|Load failed/i.test(m)) return navigator.onLine?'連不上 AI 服務，請稍後再試。':'目前離線。AI 解卦需要網路，經文解釋仍可離線閱讀。';
-  if(/401|invalid.*key|API key not valid|authentication|Incorrect API key/i.test(m)) return '金鑰無效，請到「AI 解卦設定」重新貼上。';
-  if(/credit|balance|quota|billing|insufficient/i.test(m)) return '帳戶額度不足，請到該 AI 的後台儲值或確認免費額度。';
-  if(/model|not found|404/i.test(m)) return '找不到這個模型，請到設定改用清單中的模型。（'+m.slice(0,80)+'）';
-  if(/429|rate|overloaded|529/i.test(m)) return 'AI 目前太忙，請稍等一分鐘再試。';
-  return '解卦失敗：'+m.slice(0,120);
-}
-
-function md(t){
-  const lines=esc(t).split('\n'); let h='',list=null;
-  const inl=x=>x.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/(^|[^*])\*([^*]+)\*/g,'$1<i>$2</i>');
-  const close=()=>{if(list){h+=`</${list}>`;list=null}};
-  for(const raw of lines){const l=raw.trim();
-    if(!l){close();continue}
-    let m;
-    if(m=l.match(/^#{1,6}\s*(.+)$/)){close();h+=`<h4>${inl(m[1].replace(/^【|】$/g,''))}</h4>`}
-    else if(/^(-{3,}|\*{3,})$/.test(l)){close();h+='<hr>'}
-    else if(m=l.match(/^&gt;\s?(.*)$/)){close();h+=`<blockquote>${inl(m[1])}</blockquote>`}
-    else if(m=l.match(/^[-*•]\s+(.+)$/)){if(list!=='ul'){close();h+='<ul>';list='ul'}h+=`<li>${inl(m[1])}</li>`}
-    else if(m=l.match(/^\d+[.、)]\s*(.+)$/)){if(list!=='ol'){close();h+='<ol>';list='ol'}h+=`<li>${inl(m[1])}</li>`}
-    else{close();h+=`<p>${inl(l)}</p>`}}
-  close(); return h;
-}
-
-function showAI(r){
-  $('ai-out').innerHTML=md(r.ai.text)+`<span class="ai-meta">解卦：${PROV[r.ai.p]?.name||r.ai.p}（${esc(r.ai.model)}）</span>`;
-}
 function aiPrepare(r){
   if(!$('ai-go')) return;
-  const p=SET.prov, key=SET.keys[p];
-  $('ai-who').textContent=key?`使用 ${PROV[p].name}`:'用你的 Claude 會員';
-  $('ai-msg').className='ai-msg'; $('ai-msg').textContent='';
-  $('ai-set').hidden=!!key;
-  $('ai-set').onclick=openSettings;
-  if(r.ai) showAI(r); else $('ai-out').innerHTML='';
-  if(key){
-    $('ai-go').textContent=r.ai?`改用 ${PROV[p].name} 再解一次`:'請安墨居士解卦';
-    $('ai-go').onclick=()=>aiRun(r);
-  }else{
-    $('ai-go').textContent='複製並前往 Claude 解卦';
-    if(!r.ai) $('ai-msg').textContent='按下後會複製起卦結果並打開 Claude，進入「安墨易卦」專案貼上送出即可。';
-    $('ai-go').onclick=()=>goClaude(r);
-  }
+  const p=SET.prov;
+  $('ai-who').textContent=SET.urls[p]?`前往你的安墨${PROV[p].where}`:`用你的 ${PROV[p].name} 帳號`;
+  document.querySelectorAll('.mini button').forEach(b=>{b.setAttribute('aria-checked',b.dataset.p===p);b.onclick=()=>setProv(b.dataset.p)});
+  $('ai-go').textContent=`複製並前往 ${PROV[p].name} 解卦`;
+  $('ai-msg').textContent=SET.urls[p]
+    ?`按下後會複製起卦結果並打開你的安墨${PROV[p].where}，貼上送出即可。`
+    :`按下後會連同安墨居士指令一起複製，並打開 ${PROV[p].name}，在新對話貼上送出即可。`;
+  $('ai-go').onclick=()=>goChat(r);
 }
-function openSettings(){$('settings').open=true;$('settings').scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>$('api-key').focus(),400)}
-function goClaude(r){
-  const text=copyText(r), url=SET.proj||'https://claude.ai/new', msg=$('ai-msg');
+function chatText(r,withSys){
+  const data=aiPrompt(r);
+  return withSys?`${SYS.replace('使用者已用 App 起好卦','我已用「安墨起卦」App 起好卦')}\n\n---\n以下是我的起卦結果：\n\n${data}`:data;
+}
+function goChat(r){
+  const p=SET.prov, own=SET.urls[p], url=own||PROV[p].chat, msg=$('ai-msg');
+  const text=chatText(r,!own);
   const go=ok=>{
-    msg.className='ai-msg';
-    msg.textContent=ok?'已複製。進入「安墨易卦」專案，在輸入框長按貼上後送出。':'無法自動複製，請先用下方「複製解卦文字」，再到 Claude 貼上。';
+    msg.textContent=ok?`已複製。在 ${PROV[p].name} 的輸入框長按貼上後送出。`:'無法自動複製，請先用下方「複製解卦文字」，再到 AI 貼上。';
     const a=document.createElement('a'); a.href=url; a.target='_blank'; a.rel='noopener';
     document.body.appendChild(a); a.click(); a.remove();
   };
   try{navigator.clipboard.writeText(text).then(()=>go(true),()=>go(false))}catch(e){go(false)}
-}
-async function aiRun(r){
-  const p=SET.prov, key=SET.keys[p], model=SET.models[p]||PROV[p].def;
-  if(!key){openSettings();return}
-  const btn=$('ai-go'),msg=$('ai-msg');
-  btn.disabled=true; msg.className='ai-msg'; msg.innerHTML=`安墨居士正在研墨解卦<span class="dots"></span>`;
-  try{
-    const text=(await callAI(p,key,model,aiPrompt(r))).trim();
-    if(!text) throw new Error('沒有收到回覆');
-    r.ai={p,model,text,at:new Date().toISOString()};
-    if(r.id){const l=loadLog();const i=l.findIndex(x=>x.id===r.id);if(i>-1){l[i].ai=r.ai;saveLog(l);renderLog();}}
-    if(cur===r){showAI(r);msg.textContent='';btn.textContent=`改用 ${PROV[SET.prov].name} 再解一次`;}
-  }catch(e){if(cur===r){msg.className='ai-msg err';msg.textContent=friendly(e);}}
-  finally{btn.disabled=false}
 }
 
 /* history */
@@ -557,7 +471,7 @@ function loadLog(){try{return JSON.parse(localStorage.getItem(KEY))||[]}catch(e)
 function saveLog(l){try{localStorage.setItem(KEY,JSON.stringify(l.slice(0,30)))}catch(e){}}
 function renderLog(){
   const l=loadLog(), ul=$('hist');
-  ul.innerHTML=l.map((r,i)=>`<li><button data-i="${i}"><span>${r.q?esc(r.q):'（未填問題）'}</span><span class="meta num">${r.date.slice(5)} ${r.time}</span><span class="meta">${r.ben} → ${r.zhi}　${r.yao}</span><span class="meta">${r.rel.t}${r.ai?'・已解卦':''}</span></button></li>`).join('');
+  ul.innerHTML=l.map((r,i)=>`<li><button data-i="${i}"><span>${r.q?esc(r.q):'（未填問題）'}</span><span class="meta num">${r.date.slice(5)} ${r.time}</span><span class="meta">${r.ben} → ${r.zhi}　${r.yao}</span><span class="meta">${r.rel.t}</span></button></li>`).join('');
   $('hist-empty').hidden=l.length>0; $('clear').hidden=l.length===0; $('clear-yes').hidden=true;
   ul.querySelectorAll('button').forEach(b=>b.onclick=()=>{render(l[+b.dataset.i],{animate:false});$('result').scrollIntoView({behavior:'smooth',block:'start'})});
 }
