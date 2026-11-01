@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>安墨起卦</title>
+<meta name="description" content="按下即鎖定時分秒的梅花易數起卦工具">
+<meta name="theme-color" content="#EBEFEB" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121816" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="安墨起卦">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one narrow column like a folded divination slip; the cast button is the seal at its center */
+:root{
+  --paper:#EBEFEB; --surface:#F7F9F6; --ink:#1B2220; --ink-2:#56615C; --line:#C9D1CB;
+  --jade:#2C6B5A; --jade-soft:#DCE9E3; --seal:#A5352B;
+  --f-display:"LXGW WenKai TC","Kaiti TC","STKaiti","BiauKai",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#121816; --surface:#1A211F; --ink:#E4E9E5; --ink-2:#9AA6A0; --line:#2C3532;
+  --jade:#74BBA5; --jade-soft:#1F3330; --seal:#E27363; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#121816; --surface:#1A211F; --ink:#E4E9E5; --ink-2:#9AA6A0; --line:#2C3532;
+  --jade:#74BBA5; --jade-soft:#1F3330; --seal:#E27363; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);background:var(--paper);-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.7;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 56px}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;margin:0;text-wrap:balance}
+header h1{font-size:34px;letter-spacing:.08em}
+header p{margin:2px 0 0;color:var(--ink-2);font-size:14px}
+.label{font-size:12px;letter-spacing:.14em;color:var(--ink-2);font-weight:500}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+
+textarea,input{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+textarea{resize:vertical;min-height:64px}
+textarea:focus,input:focus,button:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
+.field{display:flex;flex-direction:column;gap:6px}
+
+.tabs{display:flex;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--surface);align-self:flex-start}
+.tabs button{border:0;background:none;color:var(--ink-2);font:inherit;font-size:14px;padding:6px 16px;border-radius:999px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--jade);color:var(--surface)}
+
+.caster{display:flex;flex-direction:column;align-items:center;gap:14px;padding-block:8px}
+.clock{font-family:var(--f-num);font-size:30px;font-weight:600;letter-spacing:.06em;font-variant-numeric:tabular-nums}
+.clock small{display:block;text-align:center;font-family:var(--f-body);font-size:12px;letter-spacing:.14em;color:var(--ink-2);font-weight:400}
+.seal{width:132px;height:132px;border-radius:50%;border:0;cursor:pointer;background:var(--seal);color:#fff;
+  font-family:var(--f-display);font-size:34px;font-weight:700;letter-spacing:.1em;
+  box-shadow:0 0 0 6px var(--paper),0 0 0 7px var(--seal);transition:transform .12s ease}
+.seal:active{transform:scale(.95)}
+.hint{font-size:13px;color:var(--ink-2);text-align:center;max-width:30em;margin:0}
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%}
+.nums input{text-align:center;font-family:var(--f-num)}
+details{width:100%}
+details summary{cursor:pointer;color:var(--ink-2);font-size:13px;text-align:center}
+.manual{display:flex;gap:8px;margin-top:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+.manual input{width:64px;text-align:center;font-family:var(--f-num)}
+.btn{border:1px solid var(--jade);background:none;color:var(--jade);font:inherit;font-size:14px;padding:7px 16px;border-radius:8px;cursor:pointer}
+.btn.solid{background:var(--jade);color:var(--surface)}
+
+.result{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 18px;display:flex;flex-direction:column;gap:20px}
+.result-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tag{font-size:12px;padding:2px 10px;border-radius:999px;background:var(--jade-soft);color:var(--jade)}
+.q{font-family:var(--f-display);font-size:19px;margin:0}
+
+.gua-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px}
+.gua{display:flex;flex-direction:column;align-items:center;gap:10px;min-width:0}
+.gua .who{font-size:12px;letter-spacing:.14em;color:var(--ink-2)}
+.gua .name{font-family:var(--f-display);font-size:24px;font-weight:700;text-align:center}
+.gua .sub{font-size:12px;color:var(--ink-2)}
+.arrow{font-family:var(--f-display);color:var(--ink-2);font-size:22px}
+.lines{display:flex;flex-direction:column;gap:7px;width:96px}
+.ln{position:relative;height:11px;display:flex;justify-content:space-between}
+.ln i{display:block;height:100%;background:var(--ink);border-radius:2px}
+.ln.yang i{width:100%}
+.ln.yin i{width:42%}
+.ln.mv i{background:var(--seal)}
+.ln.mv::after{content:"";position:absolute;right:-18px;top:50%;width:8px;height:8px;border-radius:50%;background:var(--seal);transform:translateY(-50%)}
+.draw .ln{animation:rise .38s ease both}
+@keyframes rise{from{opacity:.15;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.draw .ln{animation:none}.seal{transition:none}}
+
+.steps{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:14px}
+.steps dt{color:var(--ink-2)}
+.steps dd{margin:0;min-width:0}
+.tiyong{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px}
+.verdict{font-family:var(--f-display);font-size:18px;font-weight:700;padding:2px 12px;border-radius:6px}
+.v-good{background:var(--jade-soft);color:var(--jade)}
+.v-mid{background:var(--paper);color:var(--ink-2);border:1px solid var(--line)}
+.v-bad{background:transparent;color:var(--seal);border:1px solid var(--seal)}
+
+.guaci{display:flex;flex-direction:column;gap:10px}
+.guaci p{margin:0;font-family:var(--f-display);font-size:16px;line-height:1.8}
+.guaci b{font-family:var(--f-body);font-size:12px;letter-spacing:.12em;color:var(--ink-2);font-weight:500;margin-right:8px}
+
+.copy-area{display:flex;flex-direction:column;gap:8px}
+.copy-area textarea{font-size:13px;min-height:200px;font-family:var(--f-body);line-height:1.6}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.toast{font-size:13px;color:var(--jade)}
+
+.history{display:flex;flex-direction:column;gap:10px}
+.history ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.history li button{width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:10px 2px;color:var(--ink);font:inherit;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:2px 10px}
+.history li button span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.history .meta{font-size:12px;color:var(--ink-2)}
+.empty{font-size:13px;color:var(--ink-2);margin:0}
+footer{font-size:12px;color:var(--ink-2);text-align:center}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>安墨起卦</h1>
+    <p>心念一定，按下即鎖定時分秒。梅花易數排卦，結果可直接貼回專案解卦。</p>
+  </header>
+
+  <div class="field">
+    <label class="label" for="q">所問之事</label>
+    <textarea id="q" placeholder="例：未來三個月加碼台積電是否合宜？"></textarea>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button id="tab-time" role="tab" aria-selected="true">時分秒起卦</button>
+    <button id="tab-num" role="tab" aria-selected="false">數字起卦</button>
+  </div>
+
+  <section class="caster" id="pane-time">
+    <div class="clock" id="clock">--:--:--<small>此 刻</small></div>
+    <button class="seal" id="cast" aria-label="起卦並鎖定此刻時間">起卦</button>
+    <p class="hint">先靜心，默念問題三次。念定那一刻按下，不必挑選秒數。</p>
+    <details>
+      <summary>用記下的時間起卦</summary>
+      <div class="manual">
+        <input id="mh" class="num" inputmode="numeric" maxlength="2" placeholder="時" aria-label="時">
+        <span>:</span>
+        <input id="mm" class="num" inputmode="numeric" maxlength="2" placeholder="分" aria-label="分">
+        <span>:</span>
+        <input id="ms" class="num" inputmode="numeric" maxlength="2" placeholder="秒" aria-label="秒">
+        <button class="btn" id="cast-manual">以此時間起卦</button>
+      </div>
+    </details>
+  </section>
+
+  <section class="caster" id="pane-num" hidden>
+    <div class="nums">
+      <input id="n1" inputmode="numeric" placeholder="第一數" aria-label="第一數">
+      <input id="n2" inputmode="numeric" placeholder="第二數" aria-label="第二數">
+      <input id="n3" inputmode="numeric" placeholder="第三數" aria-label="第三數">
+    </div>
+    <button class="seal" id="cast-num" aria-label="以三數起卦">起卦</button>
+    <p class="hint">心中浮現的三個數字，不假思索寫下即可。</p>
+  </section>
+
+  <section class="result" id="result" aria-live="polite"></section>
+
+  <section class="history">
+    <div class="row" style="justify-content:space-between">
+      <h3 style="font-size:20px">卦象日誌</h3>
+      <div class="row">
+        <button class="btn" id="clear" hidden>清除日誌</button>
+        <button class="btn solid" id="clear-yes" hidden>確定清除</button>
+      </div>
+    </div>
+    <ul id="hist"></ul>
+    <p class="empty" id="hist-empty">起過的卦會留在這台裝置上，方便日後回頭驗證。</p>
+  </section>
+
+  <footer><span id="net"></span>卦為明鏡，照心不代決策。投資仍以數據與風控為本。</footer>
+</div>
+
+<script>
+const TRI={1:{n:'乾',s:'☰',img:'天',wx:'金',l:[1,1,1]},2:{n:'兌',s:'☱',img:'澤',wx:'金',l:[1,1,0]},3:{n:'離',s:'☲',img:'火',wx:'火',l:[1,0,1]},4:{n:'震',s:'☳',img:'雷',wx:'木',l:[1,0,0]},5:{n:'巽',s:'☴',img:'風',wx:'木',l:[0,1,1]},6:{n:'坎',s:'☵',img:'水',wx:'水',l:[0,1,0]},7:{n:'艮',s:'☶',img:'山',wx:'土',l:[0,0,1]},8:{n:'坤',s:'☷',img:'地',wx:'土',l:[0,0,0]}};
+const HX=[
+['乾為天','天澤履','天火同人','天雷無妄','天風姤','天水訟','天山遯','天地否'],
+['澤天夬','兌為澤','澤火革','澤雷隨','澤風大過','澤水困','澤山咸','澤地萃'],
+['火天大有','火澤睽','離為火','火雷噬嗑','火風鼎','火水未濟','火山旅','火地晉'],
+['雷天大壯','雷澤歸妹','雷火豐','震為雷','雷風恆','雷水解','雷山小過','雷地豫'],
+['風天小畜','風澤中孚','風火家人','風雷益','巽為風','風水渙','風山漸','風地觀'],
+['水天需','水澤節','水火既濟','水雷屯','水風井','坎為水','水山蹇','水地比'],
+['山天大畜','山澤損','山火賁','山雷頤','山風蠱','山水蒙','艮為山','山地剝'],
+['地天泰','地澤臨','地火明夷','地雷復','地風升','地水師','地山謙','坤為地']];
+const GUACI={'乾':'元亨利貞。','坤':'元亨，利牝馬之貞。君子有攸往，先迷後得主，利。西南得朋，東北喪朋。安貞吉。','屯':'元亨利貞，勿用有攸往，利建侯。','蒙':'亨。匪我求童蒙，童蒙求我。初筮告，再三瀆，瀆則不告。利貞。','需':'有孚，光亨，貞吉。利涉大川。','訟':'有孚，窒惕，中吉，終凶。利見大人，不利涉大川。','師':'貞，丈人吉，無咎。','比':'吉。原筮，元永貞，無咎。不寧方來，後夫凶。','小畜':'亨。密雲不雨，自我西郊。','履':'履虎尾，不咥人，亨。','泰':'小往大來，吉亨。','否':'否之匪人，不利君子貞，大往小來。','同人':'同人于野，亨。利涉大川，利君子貞。','大有':'元亨。','謙':'亨，君子有終。','豫':'利建侯行師。','隨':'元亨利貞，無咎。','蠱':'元亨，利涉大川。先甲三日，後甲三日。','臨':'元亨利貞。至于八月有凶。','觀':'盥而不薦，有孚顒若。','噬嗑':'亨。利用獄。','賁':'亨。小利有攸往。','剝':'不利有攸往。','復':'亨。出入無疾，朋來無咎。反復其道，七日來復，利有攸往。','無妄':'元亨利貞。其匪正有眚，不利有攸往。','大畜':'利貞，不家食吉，利涉大川。','頤':'貞吉。觀頤，自求口實。','大過':'棟橈，利有攸往，亨。','坎':'習坎，有孚，維心亨，行有尚。','離':'利貞，亨。畜牝牛，吉。','咸':'亨，利貞，取女吉。','恆':'亨，無咎，利貞，利有攸往。','遯':'亨，小利貞。','大壯':'利貞。','晉':'康侯用錫馬蕃庶，晝日三接。','明夷':'利艱貞。','家人':'利女貞。','睽':'小事吉。','蹇':'利西南，不利東北；利見大人，貞吉。','解':'利西南，無所往，其來復吉。有攸往，夙吉。','損':'有孚，元吉，無咎，可貞，利有攸往。曷之用？二簋可用享。','益':'利有攸往，利涉大川。','夬':'揚于王庭，孚號有厲，告自邑，不利即戎，利有攸往。','姤':'女壯，勿用取女。','萃':'亨。王假有廟，利見大人，亨，利貞。用大牲吉，利有攸往。','升':'元亨，用見大人，勿恤，南征吉。','困':'亨，貞，大人吉，無咎，有言不信。','井':'改邑不改井，無喪無得，往來井井。汔至，亦未繘井，羸其瓶，凶。','革':'己日乃孚，元亨利貞，悔亡。','鼎':'元吉，亨。','震':'亨。震來虩虩，笑言啞啞。震驚百里，不喪匕鬯。','艮':'艮其背，不獲其身；行其庭，不見其人，無咎。','漸':'女歸吉，利貞。','歸妹':'征凶，無攸利。','豐':'亨，王假之，勿憂，宜日中。','旅':'小亨，旅貞吉。','巽':'小亨，利有攸往，利見大人。','兌':'亨，利貞。','渙':'亨。王假有廟，利涉大川，利貞。','節':'亨。苦節不可貞。','中孚':'豚魚吉，利涉大川，利貞。','小過':'亨，利貞，可小事，不可大事。飛鳥遺之音，不宜上宜下，大吉。','既濟':'亨小，利貞，初吉終亂。','未濟':'亨，小狐汔濟，濡其尾，無攸利。'};
+const SHENG={木:'火',火:'土',土:'金',金:'水',水:'木'}, KE={木:'土',土:'水',水:'火',火:'金',金:'木'};
+const POS=['初','二','三','四','五','上'], CN=['','一','二','三','四','五','六'];
+
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
+const mod=(n,d)=>{const r=n%d;return r===0?d:r};
+const triOf=l=>+Object.keys(TRI).find(k=>TRI[k].l.join()===l.join());
+const hexName=(u,l)=>HX[u-1][l-1];
+const shortName=f=>f.includes('為')?f[0]:f.slice(2);
+function yaoName(i,yang){const p=POS[i-1],v=yang?'九':'六';return (i===1||i===6)?p+v:v+p}
+function relation(ti,yong){
+  if(ti===yong)return{t:'比和',v:'吉，同氣相扶',c:'v-good'};
+  if(SHENG[yong]===ti)return{t:'用生體',v:'吉，外力相助',c:'v-good'};
+  if(SHENG[ti]===yong)return{t:'體生用',v:'耗，付出多於所得',c:'v-mid'};
+  if(KE[yong]===ti)return{t:'用剋體',v:'凶，受環境所制',c:'v-bad'};
+  return{t:'體剋用',v:'可成，但須費力',c:'v-mid'};
+}
+
+function build(c){
+  const lines=[...TRI[c.lo].l,...TRI[c.up].l];
+  const ch=lines.slice(); ch[c.mv-1]=1-ch[c.mv-1];
+  const zLo=triOf(ch.slice(0,3)), zUp=triOf(ch.slice(3));
+  const hLo=triOf(lines.slice(1,4)), hUp=triOf(lines.slice(2,5));
+  const yongIsLower=c.mv<=3;
+  const ti=yongIsLower?c.up:c.lo, yong=yongIsLower?c.lo:c.up;
+  return {...c,lines,ch,ben:hexName(c.up,c.lo),zhi:hexName(zUp,zLo),hu:hexName(hUp,hLo),
+    yao:yaoName(c.mv,lines[c.mv-1]===1),ti,yong,rel:relation(TRI[ti].wx,TRI[yong].wx)};
+}
+
+function fromTime(h,m,s,date){
+  const a=h+m,b=h+m+s;
+  return build({mode:'時分秒',date,time:`${pad(h)}:${pad(m)}:${pad(s)}`,up:mod(a,8),lo:mod(b,8),mv:mod(b,6),
+    steps:[['上卦',`(${h}+${m})=${a}，÷8 餘${a%8} → ${TRI[mod(a,8)].n}${TRI[mod(a,8)].s}`],
+           ['下卦',`(${h}+${m}+${s})=${b}，÷8 餘${b%8} → ${TRI[mod(b,8)].n}${TRI[mod(b,8)].s}`],
+           ['動爻',`${b}÷6 餘${b%6} → 第${CN[mod(b,6)]}爻`]]});
+}
+function fromNums(x,y,z,date,time){
+  const t=x+y+z;
+  return build({mode:'數字',date,time,nums:[x,y,z],up:mod(x,8),lo:mod(y,8),mv:mod(t,6),
+    steps:[['上卦',`${x}÷8 餘${x%8} → ${TRI[mod(x,8)].n}${TRI[mod(x,8)].s}`],
+           ['下卦',`${y}÷8 餘${y%8} → ${TRI[mod(y,8)].n}${TRI[mod(y,8)].s}`],
+           ['動爻',`(${x}+${y}+${z})=${t}，÷6 餘${t%6} → 第${CN[mod(t,6)]}爻`]]});
+}
+
+function linesHTML(lines,mv){
+  let h='';
+  for(let i=5;i>=0;i--){
+    const y=lines[i]===1, isMv=mv===i+1;
+    h+=`<div class="ln ${y?'yang':'yin'}${isMv?' mv':''}" style="animation-delay:${(5-i)*0+i*70}ms">${y?'<i></i>':'<i></i><i></i>'}</div>`;
+  }
+  return `<div class="lines">${h}</div>`;
+}
+
+function copyText(r){
+  const q=r.q||'（未填寫）';
+  const src=r.mode==='時分秒'?`時分秒法｜${r.date} ${r.time}`:`數字法｜${r.nums.join('、')}（${r.date} ${r.time}）`;
+  return `問：${q}
+起卦：${src}
+${r.steps.map(s=>s[0]+'：'+s[1]).join('\n')}
+本卦：${r.ben}（上${TRI[r.up].n}下${TRI[r.lo].n}）
+動爻：${r.yao}
+之卦：${r.zhi}
+互卦：${r.hu}
+體用：體${TRI[r.ti].n}（${TRI[r.ti].wx}），用${TRI[r.yong].n}（${TRI[r.yong].wx}），${r.rel.t}
+本卦卦辭：${GUACI[shortName(r.ben)]}
+之卦卦辭：${GUACI[shortName(r.zhi)]}
+
+請依「安墨易卦」規則解卦，並引用${shortName(r.ben)}卦${r.yao}爻辭。`;
+}
+
+function render(r,{example=false,animate=true}={}){
+  const el=$('result');
+  el.innerHTML=`
+  <div class="result-head">
+    <span class="label">${example?'範例':'卦成'}　<span class="num">${r.date} ${r.time}</span></span>
+    <span class="tag">${r.mode}起卦</span>
+  </div>
+  ${r.q?`<p class="q">問：${esc(r.q)}</p>`:''}
+  <div class="gua-row ${animate?'draw':''}">
+    <div class="gua"><span class="who">本卦</span>${linesHTML(r.lines,r.mv)}<span class="name">${r.ben}</span><span class="sub">上${TRI[r.up].n}・下${TRI[r.lo].n}</span></div>
+    <span class="arrow">→</span>
+    <div class="gua"><span class="who">之卦</span>${linesHTML(r.ch,0)}<span class="name">${r.zhi}</span><span class="sub">互卦 ${r.hu}</span></div>
+  </div>
+  <dl class="steps num-mix">
+    ${r.steps.map(s=>`<dt>${s[0]}</dt><dd class="num">${s[1]}</dd>`).join('')}
+    <dt>動爻</dt><dd>${r.yao}（第${CN[r.mv]}爻，由下往上）</dd>
+  </dl>
+  <div class="tiyong">
+    <span>體 <b>${TRI[r.ti].n}${TRI[r.ti].s}</b>（${TRI[r.ti].wx}）</span>
+    <span>用 <b>${TRI[r.yong].n}${TRI[r.yong].s}</b>（${TRI[r.yong].wx}）</span>
+    <span class="verdict ${r.rel.c}">${r.rel.t}</span>
+    <span style="color:var(--ink-2)">${r.rel.v}</span>
+  </div>
+  <div class="guaci">
+    <p><b>本卦卦辭</b>${GUACI[shortName(r.ben)]}</p>
+    <p><b>之卦卦辭</b>${GUACI[shortName(r.zhi)]}</p>
+  </div>
+  <div class="copy-area">
+    <label class="label" for="out">貼回專案解卦</label>
+    <textarea id="out" readonly>${esc(copyText(r))}</textarea>
+    <div class="row"><button class="btn solid" id="copy">複製解卦文字</button><span class="toast" id="toast"></span></div>
+  </div>`;
+  $('copy').onclick=()=>{
+    const t=$('out');
+    const done=()=>{$('toast').textContent='已複製，貼到「安墨易卦」專案即可';};
+    const fallback=()=>{t.focus();t.select();$('toast').textContent='已選取全文，請長按複製';};
+    try{navigator.clipboard.writeText(t.value).then(done,fallback)}catch(e){fallback()}
+  };
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+/* history */
+const KEY='anmo-qigua-log';
+function loadLog(){try{return JSON.parse(localStorage.getItem(KEY))||[]}catch(e){return []}}
+function saveLog(l){try{localStorage.setItem(KEY,JSON.stringify(l.slice(0,30)))}catch(e){}}
+function renderLog(){
+  const l=loadLog(), ul=$('hist');
+  ul.innerHTML=l.map((r,i)=>`<li><button data-i="${i}"><span>${r.q?esc(r.q):'（未填問題）'}</span><span class="meta num">${r.date.slice(5)} ${r.time}</span><span class="meta">${r.ben} → ${r.zhi}　${r.yao}</span><span class="meta">${r.rel.t}</span></button></li>`).join('');
+  $('hist-empty').hidden=l.length>0; $('clear').hidden=l.length===0; $('clear-yes').hidden=true;
+  ul.querySelectorAll('button').forEach(b=>b.onclick=()=>{render(l[+b.dataset.i],{animate:false});$('result').scrollIntoView({behavior:'smooth',block:'start'})});
+}
+$('clear').onclick=()=>{$('clear-yes').hidden=false;$('clear').textContent='取消';$('clear').onclick=()=>{renderLog();$('clear').textContent='清除日誌';bindClear()}};
+function bindClear(){$('clear').onclick=()=>{$('clear-yes').hidden=false;$('clear').textContent='取消';$('clear').onclick=()=>{$('clear').textContent='清除日誌';renderLog();bindClear()}}}
+bindClear();
+$('clear-yes').onclick=()=>{saveLog([]);$('clear').textContent='清除日誌';renderLog();bindClear()};
+
+function commit(r){
+  r.q=$('q').value.trim();
+  render(r);
+  const l=loadLog(); l.unshift(r); saveLog(l); renderLog();
+  $('result').scrollIntoView({behavior:'smooth',block:'start'});
+}
+const today=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
+$('cast').onclick=()=>{const d=new Date();commit(fromTime(d.getHours(),d.getMinutes(),d.getSeconds(),today(d)))};
+$('cast-manual').onclick=()=>{
+  const h=parseInt($('mh').value,10),m=parseInt($('mm').value,10),s=parseInt($('ms').value,10);
+  if([h,m,s].some(isNaN)||h>23||m>59||s>59||h<0||m<0||s<0){$('mh').focus();$('mh').placeholder='0–23';return}
+  commit(fromTime(h,m,s,today(new Date())));
+};
+$('cast-num').onclick=()=>{
+  const v=['n1','n2','n3'].map(id=>parseInt($(id).value,10));
+  const bad=v.findIndex(x=>isNaN(x)||x<1);
+  if(bad>-1){$(['n1','n2','n3'][bad]).focus();return}
+  const d=new Date();commit(fromNums(v[0],v[1],v[2],today(d),`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`));
+};
+
+/* tabs */
+function tab(t){
+  const time=t==='time';
+  $('tab-time').setAttribute('aria-selected',time);$('tab-num').setAttribute('aria-selected',!time);
+  $('pane-time').hidden=!time;$('pane-num').hidden=time;
+}
+$('tab-time').onclick=()=>tab('time');$('tab-num').onclick=()=>tab('num');
+
+/* clock */
+function tick(){const d=new Date();$('clock').innerHTML=`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}<small>此 刻</small>`}
+tick();setInterval(tick,250);
+
+/* example at rest */
+const ex=fromTime(22,5,30,'2026-10-31');ex.q='範例：此刻起卦示意';
+render(ex,{example:true,animate:false});
+renderLog();
+
+/* PWA: offline service worker */
+if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}
+function net(){$('net').textContent=navigator.onLine?'':'離線模式・功能照常　'}
+addEventListener('online',net);addEventListener('offline',net);net();
+</script>
+</body>
+</html>
