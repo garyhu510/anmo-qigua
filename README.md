@@ -22,3 +22,12 @@
 
 ## 更新程式
 修改 index.html 後，把 sw.js 第二行的版本號加一（例如 anmo-v2 改成 anmo-v3），一起上傳覆蓋。
+
+## AI 解卦設定
+1. 打開 App 下方的「AI 解卦設定」，選 Claude、Gemini 或 ChatGPT。
+2. 貼上該家的 API 金鑰，按「儲存設定」。
+   - Claude：console.anthropic.com → API Keys（需儲值）
+   - Gemini：aistudio.google.com/apikey（有免費額度）
+   - ChatGPT：platform.openai.com/api-keys（需儲值）
+3. 起卦後按「請安墨居士解卦」。
+金鑰只存在自己的手機，每個人用自己的金鑰與帳單。

@@ -1,5 +1,5 @@
 // 安墨起卦 service worker：更新程式後把版本號 +1，手機會自動換新版
-const VERSION = 'anmo-v2';
+const VERSION = 'anmo-v3';
 const CORE = ['./', 'index.html', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png'];
 
