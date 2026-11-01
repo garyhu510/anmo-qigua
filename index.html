@@ -130,6 +130,7 @@ details summary{cursor:pointer;color:var(--ink-2);font-size:13px;text-align:cent
 .ai-who{font-size:12px;color:var(--ink-2)}
 .ai-btn{border:0;background:var(--seal);color:#fff;font:inherit;font-size:16px;font-family:var(--f-display);font-weight:700;letter-spacing:.08em;padding:12px 18px;border-radius:10px;cursor:pointer}
 .ai-btn[disabled]{opacity:.55;cursor:default}
+.linkbtn{background:none;border:0;padding:0;font:inherit;font-size:13px;color:var(--jade);text-decoration:underline;cursor:pointer;align-self:center}
 .ai-msg{font-size:14px;color:var(--ink-2);margin:0}
 .ai-msg.err{color:var(--seal)}
 .ai-out{font-size:15px;line-height:1.85;display:flex;flex-direction:column;gap:10px;min-width:0;overflow-wrap:anywhere}
@@ -235,6 +236,11 @@ footer{font-size:12px;color:var(--ink-2);text-align:center}
         <span class="toast" id="set-toast"></span>
       </div>
       <p class="note" id="key-help"></p>
+      <div class="field">
+        <label class="label" for="proj-url">「安墨易卦」專案網址（選填）</label>
+        <input id="proj-url" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://claude.ai/project/...">
+        <p class="note">沒有金鑰時，按「複製並前往 Claude 解卦」會打開這個網址。在 Claude 網頁版進入專案，複製網址列貼在這裡；不填就打開 Claude 新對話。</p>
+      </div>
       <p class="note">金鑰只存在這支手機，起卦結果只會送到你選的那家 AI，不經過其他伺服器。解卦按用量計費，帳單由各家 AI 直接向你收取。</p>
     </div>
   </details>
@@ -378,6 +384,7 @@ function render(r,{example=false,animate=true}={}){
     <div class="ai-out" id="ai-out"></div>
     <p class="ai-msg" id="ai-msg"></p>
     <button class="ai-btn" id="ai-go">請安墨居士解卦</button>
+    <button class="linkbtn" id="ai-set" hidden>或設定 AI 金鑰，直接在 App 內解卦</button>
   </div>`}
   <div class="copy-area">
     <label class="label" for="out">貼回專案解卦</label>
@@ -416,10 +423,13 @@ function fillSettings(){
   $('api-model').value=SET.models[p]||PROV[p].def;
   $('models').innerHTML=PROV[p].models.map(m=>`<option value="${m}">`).join('');
   $('key-help').innerHTML=PROV[p].help;
+  $('proj-url').value=SET.proj||'';
 }
 document.querySelectorAll('input[name=prov]').forEach(i=>i.onchange=()=>{SET.prov=i.value;fillSettings();$('set-toast').textContent='';});
 $('save-key').onclick=()=>{
   const p=SET.prov; SET.keys[p]=$('api-key').value.trim(); SET.models[p]=$('api-model').value.trim()||PROV[p].def;
+  const u=$('proj-url').value.trim(); SET.proj=/^https:\/\/claude\.ai\//.test(u)?u:'';
+  if(u&&!SET.proj){$('set-toast').textContent='專案網址需以 https://claude.ai/ 開頭';return}
   $('set-toast').textContent=saveSet(SET)?`已儲存，之後用 ${PROV[p].name} 解卦`:'這個瀏覽器無法儲存，請確認不是無痕模式';
   if(cur) aiPrepare(cur);
 };
@@ -501,16 +511,34 @@ function showAI(r){
 function aiPrepare(r){
   if(!$('ai-go')) return;
   const p=SET.prov, key=SET.keys[p];
-  $('ai-who').textContent=key?`使用 ${PROV[p].name}`:'';
+  $('ai-who').textContent=key?`使用 ${PROV[p].name}`:'用你的 Claude 會員';
   $('ai-msg').className='ai-msg'; $('ai-msg').textContent='';
-  if(r.ai){showAI(r);$('ai-go').textContent=key?`改用 ${PROV[p].name} 再解一次`:'設定 AI 後可再解一次';}
-  else{$('ai-out').innerHTML='';$('ai-go').textContent=key?'請安墨居士解卦':'設定 AI 後即可解卦';
-    if(!key)$('ai-msg').textContent='第一次使用，請先選 AI 並貼上金鑰。';}
-  $('ai-go').onclick=()=>aiRun(r);
+  $('ai-set').hidden=!!key;
+  $('ai-set').onclick=openSettings;
+  if(r.ai) showAI(r); else $('ai-out').innerHTML='';
+  if(key){
+    $('ai-go').textContent=r.ai?`改用 ${PROV[p].name} 再解一次`:'請安墨居士解卦';
+    $('ai-go').onclick=()=>aiRun(r);
+  }else{
+    $('ai-go').textContent='複製並前往 Claude 解卦';
+    if(!r.ai) $('ai-msg').textContent='按下後會複製起卦結果並打開 Claude，進入「安墨易卦」專案貼上送出即可。';
+    $('ai-go').onclick=()=>goClaude(r);
+  }
+}
+function openSettings(){$('settings').open=true;$('settings').scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>$('api-key').focus(),400)}
+function goClaude(r){
+  const text=copyText(r), url=SET.proj||'https://claude.ai/new', msg=$('ai-msg');
+  const go=ok=>{
+    msg.className='ai-msg';
+    msg.textContent=ok?'已複製。進入「安墨易卦」專案，在輸入框長按貼上後送出。':'無法自動複製，請先用下方「複製解卦文字」，再到 Claude 貼上。';
+    const a=document.createElement('a'); a.href=url; a.target='_blank'; a.rel='noopener';
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+  try{navigator.clipboard.writeText(text).then(()=>go(true),()=>go(false))}catch(e){go(false)}
 }
 async function aiRun(r){
   const p=SET.prov, key=SET.keys[p], model=SET.models[p]||PROV[p].def;
-  if(!key){$('settings').open=true;$('settings').scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>$('api-key').focus(),400);return}
+  if(!key){openSettings();return}
   const btn=$('ai-go'),msg=$('ai-msg');
   btn.disabled=true; msg.className='ai-msg'; msg.innerHTML=`安墨居士正在研墨解卦<span class="dots"></span>`;
   try{
