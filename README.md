@@ -4,6 +4,7 @@
 
 ## 檔案
 - index.html：主程式
+- guide.html：使用說明書（App 最下方有連結）
 - manifest.webmanifest：App 名稱、圖示、全螢幕設定
 - sw.js：離線快取
 - icons/：App 圖示

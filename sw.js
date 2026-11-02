@@ -1,6 +1,6 @@
 // 安墨起卦 service worker：更新程式後把版本號 +1，手機會自動換新版
-const VERSION = 'anmo-v6';
-const CORE = ['./', 'index.html', 'manifest.webmanifest',
+const VERSION = 'anmo-v7';
+const CORE = ['./', 'index.html', 'guide.html', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
@@ -20,9 +20,11 @@ self.addEventListener('fetch', e => {
 
   // 頁面：先上網拿新版，離線時用快取
   if (req.mode === 'navigate') {
+    const key = url.pathname.endsWith('guide.html') ? 'guide.html' : 'index.html';
     e.respondWith(fetch(req).then(r => {
-      const copy = r.clone(); caches.open(VERSION).then(c => c.put('index.html', copy)); return r;
-    }).catch(() => caches.match('index.html')));
+      if (r.ok) { const copy = r.clone(); caches.open(VERSION).then(c => c.put(key, copy)); }
+      return r;
+    }).catch(() => caches.match(key)));
     return;
   }
 
